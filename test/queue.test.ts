@@ -3,6 +3,29 @@ import test from "node:test";
 import { hasFailedItems, isQueueComplete, migrateStagedQueue, resetQueueState } from "../src/queue";
 import { sendWasAccepted, waitUntil } from "../src/sender";
 import { completedChatUrl, completionNotificationId } from "../src/notifications";
+import { getQueueInputAction } from "../src/shortcuts";
+
+test("queue input shortcuts map Shift+Enter to add and Ctrl+Shift+Enter to start", () => {
+  assert.equal(
+    getQueueInputAction({ key: "Enter", shiftKey: true, ctrlKey: false, metaKey: false }),
+    "add",
+  );
+  assert.equal(
+    getQueueInputAction({ key: "Enter", shiftKey: true, ctrlKey: true, metaKey: false }),
+    "start",
+  );
+  assert.equal(
+    getQueueInputAction({ key: "Enter", shiftKey: true, ctrlKey: false, metaKey: true }),
+    "start",
+  );
+});
+
+test("queue input keeps Ctrl+Enter as the existing add shortcut", () => {
+  assert.equal(
+    getQueueInputAction({ key: "Enter", shiftKey: false, ctrlKey: true, metaKey: false }),
+    "add",
+  );
+});
 
 test("staged queue migrates to the conversation created by its first send", () => {
   const migrated = migrateStagedQueue(

@@ -33,6 +33,12 @@ Load `dist/` as an unpacked extension:
 4. Choose this repository's `dist` directory.
 5. Open `https://chatgpt.com`, queue prompts, and press **Start**.
 
+Queue input shortcuts:
+
+- `Shift+Enter`: add the textarea contents to the queue.
+- `Ctrl+Shift+Enter` (or `Cmd+Shift+Enter`): start the queue.
+- `Ctrl+Enter` (or `Cmd+Enter`) remains an add shortcut.
+
 The queue is stored under a conversation-specific key in `chrome.storage.local`. Refreshing the page preserves the queue. Switching conversations loads the other conversation's queue and invalidates any stale in-flight run.
 
 ## Current safety behavior

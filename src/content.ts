@@ -14,6 +14,7 @@ import {
 } from "./queue";
 import { getConversationId, loadQueue, newQueue, removeQueue, saveQueue } from "./storage";
 import { sendPrompt, waitForCompletion } from "./sender";
+import { getQueueInputAction } from "./shortcuts";
 import type { QueueItem, QueueState } from "./types";
 
 const PANEL_ID = "chatgpt-prompt-queue";
@@ -291,10 +292,16 @@ function mountPanel(controller: QueueController): void {
     input.focus();
   });
   input.addEventListener("keydown", (event) => {
-    if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
-      event.preventDefault();
-      add.click();
+    const action = getQueueInputAction(event);
+    if (!action) return;
+
+    event.preventDefault();
+    if (action === "start") {
+      controller.start();
+      return;
     }
+
+    add.click();
   });
   start.addEventListener("click", () => controller.start());
   pause.addEventListener("click", () => controller.pause());
