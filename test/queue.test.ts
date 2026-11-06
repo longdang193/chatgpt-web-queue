@@ -4,6 +4,7 @@ import { hasFailedItems, isQueueComplete, migrateStagedQueue, resetQueueState } 
 import { sendWasAccepted, waitUntil } from "../src/sender";
 import { completedChatUrl, completionNotificationId } from "../src/notifications";
 import { getQueueInputAction } from "../src/shortcuts";
+import { selectComposer } from "../src/dom";
 
 test("queue input shortcuts map Shift+Enter to add and Ctrl+Shift+Enter to start", () => {
   assert.equal(
@@ -159,4 +160,27 @@ test("completion notifications deep-link to the completed conversation", () => {
     completedChatUrl(conversationId),
     "https://chatgpt.com/c/6aedd75c-2f60-83ed-b570-de2c38e4367d",
   );
+});
+
+test("composer selection ignores old writing blocks and chooses the ChatGPT composer", () => {
+  const writingBlock = {
+    getAttribute(name: string): string | null {
+      return name === "aria-label" ? "Start writing" : null;
+    },
+    hasAttribute(): boolean {
+      return false;
+    },
+    isConnected: true,
+  } as unknown as HTMLElement;
+  const composer = {
+    getAttribute(name: string): string | null {
+      return name === "aria-label" ? "Ask ChatGPT" : null;
+    },
+    hasAttribute(): boolean {
+      return false;
+    },
+    isConnected: true,
+  } as unknown as HTMLElement;
+
+  assert.equal(selectComposer([writingBlock, composer]), composer);
 });

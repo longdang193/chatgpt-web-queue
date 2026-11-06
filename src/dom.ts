@@ -1,8 +1,10 @@
 const COMPOSER_SELECTORS = [
   "textarea[data-id=\"root\"]",
   "textarea[placeholder*='Message']",
-  "div[contenteditable='true'][role='textbox']",
+  "div[contenteditable='true'][data-composer-markdown]",
   "div[contenteditable='true'][data-virtualkeyboard='true']",
+  "div[contenteditable='true'][aria-label*='Ask ChatGPT']",
+  "div[contenteditable='true'][role='textbox']",
 ];
 
 const SEND_SELECTORS = [
@@ -27,10 +29,22 @@ const ERROR_SELECTORS = [
 
 export function findComposer(): HTMLElement | null {
   for (const selector of COMPOSER_SELECTORS) {
-    const element = document.querySelector<HTMLElement>(selector);
-    if (element && isVisible(element)) return element;
+    const elements = Array.from(document.querySelectorAll<HTMLElement>(selector)).filter(isVisible);
+    const element = selectComposer(elements);
+    if (element) return element;
   }
   return null;
+}
+
+export function selectComposer(elements: HTMLElement[]): HTMLElement | null {
+  return (
+    elements.find(
+      (element) =>
+        element.hasAttribute("data-composer-markdown") ||
+        element.hasAttribute("data-virtualkeyboard") ||
+        /ask chatgpt/i.test(element.getAttribute("aria-label") ?? ""),
+    ) ?? elements.at(-1) ?? null
+  );
 }
 
 export function findSendButton(): HTMLButtonElement | null {
