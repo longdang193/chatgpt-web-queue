@@ -10,6 +10,7 @@ import {
   hasFailedItems,
   isQueueComplete,
   nextPendingItem,
+  resetQueueState,
 } from "./queue";
 import { getConversationId, loadQueue, newQueue, removeQueue, saveQueue } from "./storage";
 import { sendPrompt, waitForCompletion } from "./sender";
@@ -71,6 +72,14 @@ class QueueController {
 
   pause(reason = "paused-by-user"): void {
     this.update({ paused: true, pauseReason: reason });
+  }
+
+  clear(): void {
+    this.runToken += 1;
+    this.pumpInFlight = false;
+    this.state = resetQueueState(this.state);
+    void saveQueue(this.state);
+    this.emit();
   }
 
   retry(itemId: string): void {
@@ -171,6 +180,7 @@ class QueueController {
       chrome.runtime.sendMessage({
         type: "queue-complete",
         count: this.state.items.filter((item) => item.status === "done").length,
+        conversationId: this.conversationId,
       });
       return;
     }
@@ -257,6 +267,7 @@ function mountPanel(controller: QueueController): void {
           <button class="primary" data-add>Add to queue</button>
           <button data-start>Start</button>
           <button data-pause>Pause</button>
+          <button data-clear>Clear</button>
         </div>
         <div class="status" data-status>Idle</div>
         <ol data-list></ol>
@@ -267,6 +278,7 @@ function mountPanel(controller: QueueController): void {
   const add = shadow.querySelector<HTMLButtonElement>("[data-add]")!;
   const start = shadow.querySelector<HTMLButtonElement>("[data-start]")!;
   const pause = shadow.querySelector<HTMLButtonElement>("[data-pause]")!;
+  const clear = shadow.querySelector<HTMLButtonElement>("[data-clear]")!;
   const toggle = shadow.querySelector<HTMLButtonElement>("[data-toggle]")!;
   const body = shadow.querySelector<HTMLElement>(".body")!;
   const list = shadow.querySelector<HTMLOListElement>("[data-list]")!;
@@ -286,6 +298,7 @@ function mountPanel(controller: QueueController): void {
   });
   start.addEventListener("click", () => controller.start());
   pause.addEventListener("click", () => controller.pause());
+  clear.addEventListener("click", () => controller.clear());
   toggle.addEventListener("click", () => {
     body.hidden = !body.hidden;
     toggle.textContent = body.hidden ? "+" : "−";
@@ -296,6 +309,7 @@ function mountPanel(controller: QueueController): void {
     count.textContent = `${pending} pending`;
     start.disabled = state.running && !state.paused;
     pause.disabled = !state.running || state.paused;
+    clear.disabled = state.items.length === 0;
     status.textContent = state.paused
       ? `Paused: ${state.pauseReason ?? "manual"}`
       : state.running

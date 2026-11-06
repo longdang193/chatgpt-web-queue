@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { hasFailedItems, isQueueComplete, migrateStagedQueue } from "../src/queue";
+import { hasFailedItems, isQueueComplete, migrateStagedQueue, resetQueueState } from "../src/queue";
 import { sendWasAccepted, waitUntil } from "../src/sender";
+import { completedChatUrl, completionNotificationId } from "../src/notifications";
 
 test("staged queue migrates to the conversation created by its first send", () => {
   const migrated = migrateStagedQueue(
@@ -99,4 +100,40 @@ test("completion waits resolve from a DOM mutation before the timer fallback", a
     globalThis.MutationObserver = originalMutationObserver;
     (globalThis as { window?: Window }).window = originalWindow;
   }
+});
+
+test("clearing a queue creates an empty queue for the same conversation", () => {
+  const cleared = resetQueueState({
+    version: 1,
+    conversationId: "conversation-123",
+    items: [
+      { id: "done", prompt: "already sent", status: "done", createdAt: 1 },
+      { id: "pending", prompt: "not sent", status: "pending", createdAt: 2 },
+    ],
+    running: true,
+    paused: false,
+    delayMs: 3_000,
+    completionNotified: true,
+    updatedAt: 3,
+  });
+
+  assert.deepEqual(cleared.items, []);
+  assert.equal(cleared.conversationId, "conversation-123");
+  assert.equal(cleared.running, false);
+  assert.equal(cleared.paused, false);
+  assert.equal(cleared.completionNotified, false);
+  assert.equal(cleared.delayMs, 3_000);
+});
+
+test("completion notifications deep-link to the completed conversation", () => {
+  const conversationId = "6aedd75c-2f60-83ed-b570-de2c38e4367d";
+
+  assert.equal(
+    completionNotificationId(conversationId),
+    "chatgpt-queue-complete:6aedd75c-2f60-83ed-b570-de2c38e4367d",
+  );
+  assert.equal(
+    completedChatUrl(conversationId),
+    "https://chatgpt.com/c/6aedd75c-2f60-83ed-b570-de2c38e4367d",
+  );
 });

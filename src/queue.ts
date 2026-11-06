@@ -15,6 +15,13 @@ export function createQueueState(conversationId: string): QueueState {
   };
 }
 
+export function resetQueueState(state: QueueState): QueueState {
+  return {
+    ...createQueueState(state.conversationId),
+    delayMs: state.delayMs,
+  };
+}
+
 export function normalizeQueueState(
   value: unknown,
   conversationId: string,

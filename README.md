@@ -16,7 +16,7 @@ The referenced repositories are useful design references, not code dependencies:
 - `kgruiz/chatgpt-queue`: WXT-based, conversation-scoped persistence, attachments, model controls, and keyboard-first editing. Its repository license is GPL-3.0.
 - `LaNguAx/ChatGPT-Message-Queue-Extension`: TypeScript/React MV3 queue with DOM completion detection, configurable delays, retries, and tests. Its repository license is MIT.
 
-This implementation deliberately starts smaller: prompt text only, conversation-scoped local storage, explicit Start/Pause, reorder/remove/retry/skip, and completion notification. It does not bypass usage limits or anti-automation controls.
+This implementation deliberately starts smaller: prompt text only, conversation-scoped local storage, explicit Start/Pause, reorder/remove/retry/skip, a Clear action for starting a fresh queue, and completion notification. It does not bypass usage limits or anti-automation controls.
 
 ## Development
 
@@ -41,4 +41,5 @@ The queue is stored under a conversation-specific key in `chrome.storage.local`.
 - A prompt is marked `sending` before DOM interaction and becomes `done` only after the stop-generation control disappears and remains absent briefly.
 - Missing composer/send controls, ignored clicks, visible error toasts, and completion timeouts pause the queue and mark the item `failed`.
 - If the user types into an empty composer while automation is ready, the queue pauses instead of overwriting the draft.
-- When all items are `done`, the extension sends one notification through the service worker.
+- When all items are `done`, the extension sends one notification through the service worker; clicking it focuses the completed conversation or opens that conversation in a new ChatGPT tab.
+- `Clear` removes all queue records, including sent items, and resets the queue to an empty idle state for the same conversation. It does not delete messages already sent to ChatGPT.
